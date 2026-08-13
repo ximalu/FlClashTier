@@ -17,12 +17,12 @@
 - [x] GitHub fork `chen08209/FlClash` → `ximalu/FlClash`
 - [x] GitHub fork `zerotier/ZeroTierOne` → `ximalu/ZeroTierOne`（M1 准备）
 - [x] GitHub 建项目仓库 `ximalu/FlClashTier`
-- [ ] clone FlClash fork 到 `~/FlClashTier/FlClash`
+- [ ] clone FlClash fork 到 `~/FlClashTier/FlClash` — ✅ 已完成（77MB, depth 1, commit 7c83185）
 - [ ] 本地构建验证：FlClash 原版能出 APK（建立基线）
-  - [ ] Android SDK / NDK / Flutter / Go 工具链确认
+  - [ ] Android SDK / NDK / Flutter / Go 工具链确认 — **现状：go 1.22.2 ✓ / java ✓ / flutter ✗ / Android SDK ✗**（需装 Flutter + Android SDK+NDK，GB 级下载）
   - [ ] 首次构建成功
 - [ ] 确认 FlClash 版本与 mihomo vendored 快照版本（Clash.Meta 目录）
-- [ ] 推送本项目文档到 `ximalu/FlClashTier`（README + docs）
+- [ ] 推送本项目文档到 `ximalu/FlClashTier`（README + docs） — ✅ 已完成
 
 ## 阶段 1：M0 — 纯透传 Pump（当前主攻）
 
