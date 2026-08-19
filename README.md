@@ -5,6 +5,10 @@
 - **ZeroTier** 管私网（ZT managed routes，如 192.168.191.0/24）
 - **Mihomo** 管代理/公网（DIRECT / PROXY）
 
+> [!IMPORTANT]
+> **本仓库是项目文档仓库（docs only），不包含代码。**
+> **代码仓库（FlClash fork）：https://github.com/ximalu/FlClash**
+
 ## 核心思路
 
 不改 Mihomo、不改 Android VpnService、不加 JNI —— 只在 `tun.Start()` 与 `sing_tun.New()` 之间插入一个 **Packet Pump**（TUN 数据分流层）：
@@ -36,14 +40,17 @@ M0 的本质：把 Mihomo 原来直接拿到的 TUN fd 换成一个行为上足�
 
 ## 仓库结构
 
+本仓库仅包含文档：
+
 - `docs/开发纪要.md` — 全部讨论内容归档
 - `docs/milestones.md` — 分步行动与目标（任务清单）
-- `FlClash/` — FlClash fork 工作副本（https://github.com/ximalu/FlClash）
+
+代码在独立仓库（fork）：**[https://github.com/ximalu/FlClash](https://github.com/ximalu/FlClash)**。
 
 ## 关联仓库
 
 - 上游：https://github.com/chen08209/FlClash
-- fork：https://github.com/ximalu/FlClash （M0 工作副本）
+- **代码（fork）：https://github.com/ximalu/FlClash**（M0/M1 工作副本，活跃开发）
 - fork：https://github.com/ximalu/ZeroTierOne （M1 准备，ZeroTier Core C++）
 - 依赖：sagernet/sing-tun、metacubex/mihomo（vendored 于 FlClash/Clash.Meta）、sagernet/gvisor
 
