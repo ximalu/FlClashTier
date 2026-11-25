@@ -37,9 +37,6 @@ Android VpnService
 - ZeroTier 的物理 UDP socket 绑定当前物理网络，换网时重建并重置对端路径（路径级自愈）
 - 诊断：分层计数、sendto errno 直方图、`zt-diag.log` / `app-diag.log`
 
-设计过程文档（开发纪要、里程碑清单）只在本地保存，不随仓库发布；
-源码与提交历史见 [ximalu/FlClash](https://github.com/ximalu/FlClash)。
-
 ## 已知限制
 
 - 仅 arm64
