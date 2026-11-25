@@ -1,60 +1,58 @@
 # FlClashTier
 
-**FlClash + ZeroTier Core 双网络出口** — 在 FlClash（Android VpnService + Mihomo 内核）中嵌入 ZeroTier Core，实现单 VPN 双出口：
+**FlClash + ZeroTier Core 双网络出口** — 在 FlClash（Android VpnService + mihomo 内核）中嵌入 ZeroTier Core，用**一个** VPN 槽位同时提供私网访问与代理出口：
 
-- **ZeroTier** 管私网（ZT managed routes，如 192.168.191.0/24）
-- **Mihomo** 管代理/公网（DIRECT / PROXY）
+- **ZeroTier** 管私网（ZT managed routes）
+- **mihomo** 管代理 / 公网（DIRECT / PROXY）
 
-> [!IMPORTANT]
-> **本仓库是项目文档仓库（docs only），不包含代码。**
-> **代码仓库（FlClash fork）：https://github.com/ximalu/FlClash**
+本仓库是**项目文档 + 安装包发布页**；**源码**在 [ximalu/FlClash](https://github.com/ximalu/FlClash)（上游 [chen08209/FlClash](https://github.com/chen08209/FlClash) 的 fork）。
 
-## 核心思路
+## 下载 / Install
 
-不改 Mihomo、不改 Android VpnService、不加 JNI —— 只在 `tun.Start()` 与 `sing_tun.New()` 之间插入一个 **Packet Pump**（TUN 数据分流层）：
+APK 统一发布在本仓库的 [Releases](https://github.com/ximalu/FlClashTier/releases)。
+
+- 平台：Android **arm64-v8a**（只有 arm64 有 ZeroTier 静态库）
+- 包名：`com.flclashtier`
+- 升级方式：**覆盖安装，不要卸载** —— 卸载会清掉 ZeroTier identity，节点地址改变，需要在 Central 重新授权
+- 签名：正式 release key，证书 SHA-256 `b719cbf2…70370f`
+- 资源名形如 `FlClashTier-<version>-arm64-release.apk`，每个 release 正文附 `sha256`
+
+首次使用顺序：① 配置文件页导入 Clash 配置 → ② 设置 → ZeroTier 填 Network ID → ③ 首页开启 VPN → ④（只需要一次）在 ZeroTier Central 授权这个节点。identity 会持久化，之后升级、重启都不用重新授权。
+
+## 架构
 
 ```
 Android VpnService
       │  real TUN fd
       ▼
-┌───────────┐
-│ ZT Pump   │  ← FlClashTier 真正新增的核心
-└─────┬─────┘
-      │  SOCK_DGRAM socketpair
-      ▼
-sing_tun / Mihomo
-      │
-      ▼
-    Proxy
+┌───────────────┐
+│  Flow Router  │  ← 按 ZeroTier Managed Routes 分流
+└───┬───────┬───┘
+    │       │
+    ▼       ▼
+ ZT core  mihomo（socketpair → sing_tun）
 ```
 
-M0 的本质：把 Mihomo 原来直接拿到的 TUN fd 换成一个行为上足够像 TUN 的 **Unix DGRAM fd**。
+- 分流依据只有一条：ZeroTier core 下发的 managed routes（不硬编码网段）
+- ZeroTier 的物理 UDP socket 绑定当前物理网络，换网时重建并重置对端路径（路径级自愈）
+- 诊断：分层计数、sendto errno 直方图、`zt-diag.log` / `app-diag.log`
 
-## 里程碑
+设计文档在本仓库 `docs/` 下：
 
-| 阶段 | 内容 | 目标 |
-|------|------|------|
-| **M0** | 真实 TUN → Pump → socketpair → Mihomo，全透传不分流，ZeroTier=0 | FlClash 原有功能零退化（浏览器/DNS/TCP/UDP/IPv6） |
-| **M1** | Pump 分流：`dst ∈ ZT 网段 → ZeroTier，else → Mihomo`（先硬编码 192.168.191.0/24） | Ubuntu ↔ Android ping 互通 + Android 上网正常 |
-| **M2** | 防环 + 自动 Managed Routes（不硬编码网段） | ZT core 的 managed routes 自动进 Pump 路由表 |
+- `docs/开发纪要.md` — 架构讨论全量归档
+- `docs/milestones.md` — 里程碑与分步目标
 
-## 仓库结构
+## 已知限制
 
-本仓库仅包含文档：
+- 仅 arm64
+- 需要系统 VPN 槽位（所有 VpnService 应用都一样）
+- 对端列表不显示「直连 / 中继」：ZeroTier C API 给不出可靠证据
+- 冷启动后第一次换网，ZT 通路可能需要约 90 秒恢复；后续换网通常无感
 
-- `docs/开发纪要.md` — 全部讨论内容归档
-- `docs/milestones.md` — 分步行动与目标（任务清单）
+## 许可与致谢
 
-代码在独立仓库（fork）：**[https://github.com/ximalu/FlClash](https://github.com/ximalu/FlClash)**。
-
-## 关联仓库
-
-- 上游：https://github.com/chen08209/FlClash
-- **代码（fork）：https://github.com/ximalu/FlClash**（M0/M1 工作副本，活跃开发）
-- fork：https://github.com/ximalu/ZeroTierOne （M1 准备，ZeroTier Core C++）
-- 依赖：sagernet/sing-tun、metacubex/mihomo（vendored 于 FlClash/Clash.Meta）、sagernet/gvisor
-
-## 许可证注意
-
-- ZeroTier Core：BSL 1.1（源码可得；个人/内部/学术免费；每版本 4 年后转 Apache 2.0）
-- FlClash：GPL-3.0（fork 需保持 GPL）
+- 本项目遵循 **GPL-3.0**（见 `LICENSE`），与上游一致
+- 基于 [FlClash](https://github.com/chen08209/FlClash) 二次开发（GPL-3.0）
+- 代理内核：[mihomo / Clash.Meta](https://github.com/MetaCubeX/mihomo)（GPL-3.0）
+- 虚拟网络内核：[ZeroTierOne](https://github.com/zerotier/ZeroTierOne)，BSL 1.1（源码可得；个人/内部/学术免费；每版本 4 年后转 Apache 2.0）
+- 依赖：sagernet/sing-tun、sagernet/gvisor
